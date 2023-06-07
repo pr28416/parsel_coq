@@ -57,18 +57,33 @@ def to_implementation_str(implementation_set, dependencies_str):
 
 # Try to fill in the implementation of a set of functions in an SCC
 def eval_implementation(implementation_set, dependencies_str, asserts_str, verbose=True, best_attempt=0):
+    print("EVAL IMPLEMENTATION is called")
     implementation_attempt = to_implementation_str(
         implementation_set, dependencies_str)
     asserts_passed = []
     failure = None
     attempted = 0
+
+    # For Coq, try compiling the program as a whole and see if there are any errors
+    # if mode == 'coq':
+    #     # Try to execute the code
+    #     print("Executing whole Coq code")
+    #     try:
+    #         CONSTS['exec'](implementation_attempt)
+    #     except Exception as e:
+    #         if e is not None:
+    #             print("Failure:", failure)
+    #             failure = e
+
     # Try all of the asserts one at a time
     # This is perhaps less efficient for Python, but it
     # gives us a lot more information about what went wrong
     # and although not currently explicitly supported,
     # it may be necessary for other languages
     # where multiple constraints can't be applied at once
+    print("Are there asserts?", asserts_str)
     for assert_str in asserts_str.splitlines():
+        print("*** Testing against ASSERT:", assert_str)
         # We do still give up if we've already done better than this attempt
         if (len(asserts_str.splitlines()) - attempted < best_attempt) or (
                 CONSTS['strict_mode'] and (len(asserts_passed) != attempted)):
@@ -304,6 +319,8 @@ def multiprocess_fill(scc, dependencies_str, defined_fns, all_implementations, a
     all_attempts = {}
     start_time = time.time()
 
+    print("Multiprocess fill")
+
     # We use a ProcessPoolExecutor to parallelize the work
     # This helps us handle variance in the runtime of each implementation
     # As well as broadly make better use of compute
@@ -311,7 +328,7 @@ def multiprocess_fill(scc, dependencies_str, defined_fns, all_implementations, a
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers, mp_context=get_context('spawn')) as executor:
         futures = []
         submitted = 0
-
+        print("Starting ProcessPoolExecutor")
         # Loop over as many implementation sets as we can
         for implementation_set_indices in implementation_sets:
             # We need to convert the implementation set indices to the actual implementation_set
@@ -319,12 +336,16 @@ def multiprocess_fill(scc, dependencies_str, defined_fns, all_implementations, a
             if (not (time.time() - start_time > min_time and submitted > min_attempts)) and ((time.time() - start_time) < max_time):
                 try:
                     # Check for syntax errors
-                    # CONSTS['exec'](to_implementation_str(implementation_set, dependencies_str))
-                    ast.parse(to_implementation_str(implementation_set, dependencies_str))
+                    CONSTS['exec'](to_implementation_str(implementation_set, dependencies_str))
+                    if mode != 'coq':
+                        ast.parse(to_implementation_str(implementation_set, dependencies_str))
+                        
+                    print("Submitted implementation for future:", implementation_set)
                     futures.append(executor.submit(
                         eval_implementation, implementation_set, dependencies_str, asserts_str, verbose))
                     submitted += 1
-                except:
+                except Exception as e:
+                    print("Failed implementation for", implementation_set, ":", e)
                     pass
 
             # Once we have a full batch of futures, avoid submitting more

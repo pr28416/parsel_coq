@@ -20,6 +20,12 @@ def lean_exec(code):
 
 CONSTS = {
     "rate_limit_tokens_text": 16000,
+    
+    "num_completions": 64,
+    "min_completions": 8,
+    "num_completions_eval": 64,
+    "eval_mode": False,
+
     "exec_pre": "",
     "needs_indent": False,
     "fn_init": "def ",

@@ -28,6 +28,8 @@ class Function:
     def get_codex_input(self):
         base_str = ""
         base_str += self.prefix
+        # base_str += self.name + ":"
+        # print("Starting base_str as:", base_str)
         already_listed = [self.name]
         for child in self.children:
             if child.name in already_listed:
@@ -35,7 +37,7 @@ class Function:
             already_listed.append(child.name)
             ret_str = (" -> " + ", ".join(child.ret)) if child.ret else ""
             if isinstance(CONSTS["desc_helper"], str):
-                base_str += CONSTS["desc_helper"].format(desc=child.desc)
+                base_str += CONSTS["desc_helper"].format(desc=child.desc, name="In Coq: " + self.name.strip("{'}"))
             else:
                 base_str += CONSTS["desc_helper"](child.desc)
             base_str += CONSTS["sig_helper"].format(
@@ -44,7 +46,7 @@ class Function:
             base_str += f"\n"
         if self.desc:
             if isinstance(CONSTS["desc_helper"], str):
-                base_str += CONSTS["desc_helper"].format(desc=self.desc)
+                base_str += CONSTS["desc_helper"].format(desc=self.desc, name="In Coq: " + self.name.strip("{'}"))
             else:
                 base_str += CONSTS["desc_helper"](self.desc)
         if self.ret and ', '.join(self.ret):
@@ -100,6 +102,10 @@ assert"""
             max_tokens = 500
         if num_completions is None:
             num_completions = CONSTS['num_completions']
+
+        codex_input = self.get_codex_input()
+        print("CODEX INPUT:", codex_input)
+
         self.implementations = codex.generate(
             codex_in=self.get_codex_input(),
             num_completions=num_completions,
@@ -115,6 +121,10 @@ assert"""
         if "shuffle_implementations" in CONSTS and CONSTS["shuffle_implementations"]:
             random.shuffle(self.implementations)
         self.implementations = self.implementations[:CONSTS['num_completions_eval']]
+
+        print("CODEX OUTPUT:")
+        for impl in self.implementations:
+            print(">>>", impl)
 
     # Generate tests for this function
     def generate_tests(self, codex, num_completions=None):

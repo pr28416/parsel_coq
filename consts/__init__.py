@@ -1,10 +1,12 @@
-mode = 'py'
+mode = 'coq'
 if mode == 'py':
     from .py_consts import CONSTS
 elif mode == 'lean':
     from .lean_consts import CONSTS
 elif mode == 'vh':
     from .vh_consts import CONSTS
+elif mode == 'coq':
+    from .coq_consts import CONSTS
 
 def assert_mode(target_mode):
     if mode == target_mode:

@@ -28,8 +28,9 @@ class CodeGen():
         stop=["\ndef"], indented=True, indented_after_first_line=False, require=None, cache_key=None,
         rate_limit_tokens=4000, verbose=False, logit_bias=None, model_name=None
     ):
+        print("MODEL: TEXT-DAVINCI-003")
         if model_name is None:
-            model_name = "code-davinci-002"
+            model_name = "text-davinci-003"
         if verbose:
             print(codex_in)
             print("-----")
@@ -38,7 +39,7 @@ class CodeGen():
         cache_key_list = (cache_key_base, max_tokens, temperature, stop, indented, indented_after_first_line, require)
         if presence_penalty != 0.0:
             cache_key_list = cache_key_list + (presence_penalty,)
-        if model_name != "code-davinci-002":
+        if model_name != "text-davinci-003":
             cache_key_list = cache_key_list + (model_name,)
         cache_key = str(cache_key_list)
         if cache_key in self.cache:
@@ -46,6 +47,7 @@ class CodeGen():
                 num_completions -= len(self.cache[cache_key])
                 results = self.cache[cache_key]
             else:
+                print(f"cache_key ({len(self.cache[cache_key])}): {cache_key}, num_completions: {num_completions}")
                 cur_implementations = self.cache[cache_key].copy()
                 if "shuffle_implementations" in CONSTS and CONSTS["shuffle_implementations"]:
                     random.shuffle(cur_implementations)
@@ -53,7 +55,7 @@ class CodeGen():
         else:
             results = []
 
-        if model_name != "code-davinci-002":
+        if model_name != "text-davinci-003":
             print("WARNING, using davinci text model")
 
         print("Calling Codex!")
@@ -93,6 +95,9 @@ class CodeGen():
                     print("Rate limit reached. Waiting before retrying...")
                     time.sleep(16 * self.exponential_backoff)
                     self.exponential_backoff *= 2
+
+            # print("CODE GENERATION OPENAI COMPLETIONS:", completions)
+
             for completion in completions:
                 result = []
                 for line_idx, line in enumerate(completion.text.split("\n")):
