@@ -1,0 +1,1 @@
+Lemma max_ge_n(): forall n m : nat, max n m >= n.
